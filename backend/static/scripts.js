@@ -1,46 +1,6 @@
-let currentUserId = null;
-
-// Регистрация
-document.getElementById('registerForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const username = document.getElementById('registerUsername').value;
-    const password = document.getElementById('registerPassword').value;
-
-    const response = await fetch('/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
-    });
-
-    if (response.ok) {
-        alert('Пользователь зарегистрирован!');
-    } else {
-        const error = await response.json();
-        alert(error.error);
-    }
-});
-
-// Вход
-document.getElementById('loginForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const username = document.getElementById('loginUsername').value;
-    const password = document.getElementById('loginPassword').value;
-
-    const response = await fetch('/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
-    });
-
-    if (response.ok) {
-        const data = await response.json();
-        alert('Успешный вход!');
-        currentUserId = data.user_id; // Сохраняем ID пользователя
-        loadCards();
-    } else {
-        const error = await response.json();
-        alert(error.error);
-    }
+// Проверка авторизации при загрузке страницы
+document.addEventListener('DOMContentLoaded', () => {
+    loadCards();
 });
 
 // Создание карточки
@@ -50,11 +10,6 @@ document.getElementById('cardForm').addEventListener('submit', async (e) => {
     const birthDate = document.getElementById('birthDate').value;
     const interests = document.getElementById('interests').value;
 
-    if (!currentUserId) {
-        alert('Необходимо войти в систему');
-        return;
-    }
-
     if (birthDate && !isValidDate(birthDate)) {
         alert('Неверный формат даты. Используйте формат дд.мм.гггг.');
         return;
@@ -63,7 +18,7 @@ document.getElementById('cardForm').addEventListener('submit', async (e) => {
     const response = await fetch('/cards', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: currentUserId, full_name: fullName, birth_date: birthDate, interests: interests })
+        body: JSON.stringify({ full_name: fullName, birth_date: birthDate, interests: interests })
     });
 
     if (response.ok) {
@@ -74,9 +29,7 @@ document.getElementById('cardForm').addEventListener('submit', async (e) => {
 
 // Загрузка карточек
 async function loadCards() {
-    if (!currentUserId) return;
-
-    const response = await fetch(`/cards?user_id=${currentUserId}`);
+    const response = await fetch('/cards');
     const cards = await response.json();
     const cardsList = document.getElementById('cardsList');
     cardsList.innerHTML = cards.map(card => `
@@ -90,12 +43,7 @@ async function loadCards() {
 
 // Удаление карточки
 async function deleteCard(cardId) {
-    if (!currentUserId) {
-        alert('Необходимо войти в систему');
-        return;
-    }
-
-    const response = await fetch(`/cards/${cardId}?user_id=${currentUserId}`, { method: 'DELETE' });
+    const response = await fetch(`/cards/${cardId}`, { method: 'DELETE' });
     if (response.ok) {
         alert('Карточка удалена!');
         loadCards();
@@ -128,11 +76,6 @@ document.getElementById('saveChangesBtn').addEventListener('click', async () => 
     const birthDate = document.getElementById('editBirthDate').value;
     const interests = document.getElementById('editInterests').value;
 
-    if (!currentUserId) {
-        alert('Необходимо войти в систему');
-        return;
-    }
-
     if (birthDate && !isValidDate(birthDate)) {
         alert('Неверный формат даты. Используйте формат дд.мм.гггг.');
         return;
@@ -141,7 +84,7 @@ document.getElementById('saveChangesBtn').addEventListener('click', async () => 
     const response = await fetch(`/cards/${cardId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: currentUserId, full_name: fullName, birth_date: birthDate, interests: interests })
+        body: JSON.stringify({ full_name: fullName, birth_date: birthDate, interests: interests })
     });
 
     if (response.ok) {

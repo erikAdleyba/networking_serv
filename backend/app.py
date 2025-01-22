@@ -1,9 +1,10 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, redirect, url_for, session
 import sqlite3
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
+app.secret_key = 'your_secret_key_here'  # Секретный ключ для подписи сессий
 DATABASE = 'cards.db'
 
 # Инициализация базы данных
@@ -38,65 +39,76 @@ def is_valid_date(date_str):
     except ValueError:
         return False
 
-# Главная страница
+# Главная страница (карточки)
 @app.route('/')
 def index():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))  # Перенаправляем на страницу входа, если пользователь не авторизован
     return render_template('index.html')
 
-# Регистрация
-@app.route('/register', methods=['POST'])
+# Страница регистрации
+@app.route('/register', methods=['GET', 'POST'])
 def register():
-    data = request.json
-    username = data.get('username')
-    password = data.get('password')
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
 
-    if not username or not password:
-        return jsonify({"error": "Логин и пароль обязательны"}), 400
+        if not username or not password:
+            return jsonify({"error": "Логин и пароль обязательны"}), 400
 
-    password_hash = generate_password_hash(password)
+        password_hash = generate_password_hash(password)
 
-    conn = sqlite3.connect(DATABASE)
-    cursor = conn.cursor()
-    try:
-        cursor.execute('INSERT INTO users (username, password_hash) VALUES (?, ?)',
-                       (username, password_hash))
-        conn.commit()
-    except sqlite3.IntegrityError:
-        return jsonify({"error": "Пользователь уже существует"}), 400
-    finally:
+        conn = sqlite3.connect(DATABASE)
+        cursor = conn.cursor()
+        try:
+            cursor.execute('INSERT INTO users (username, password_hash) VALUES (?, ?)',
+                           (username, password_hash))
+            conn.commit()
+        except sqlite3.IntegrityError:
+            return jsonify({"error": "Пользователь уже существует"}), 400
+        finally:
+            conn.close()
+
+        return redirect(url_for('login'))
+    return render_template('register.html')
+
+# Страница входа
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+
+        conn = sqlite3.connect(DATABASE)
+        cursor = conn.cursor()
+        cursor.execute('SELECT id, password_hash FROM users WHERE username = ?', (username,))
+        user = cursor.fetchone()
         conn.close()
 
-    return jsonify({"message": "Пользователь зарегистрирован"}), 201
+        if not user or not check_password_hash(user[1], password):
+            return jsonify({"error": "Неверный логин или пароль"}), 401
 
-# Вход
-@app.route('/login', methods=['POST'])
-def login():
-    data = request.json
-    username = data.get('username')
-    password = data.get('password')
+        # Сохраняем ID пользователя в сессии
+        session['user_id'] = user[0]
+        return redirect(url_for('index'))
+    return render_template('login.html')
 
-    conn = sqlite3.connect(DATABASE)
-    cursor = conn.cursor()
-    cursor.execute('SELECT id, password_hash FROM users WHERE username = ?', (username,))
-    user = cursor.fetchone()
-    conn.close()
-
-    if not user or not check_password_hash(user[1], password):
-        return jsonify({"error": "Неверный логин или пароль"}), 401
-
-    return jsonify({"message": "Успешный вход", "user_id": user[0]}), 200
+# Выход
+@app.route('/logout')
+def logout():
+    session.pop('user_id', None)  # Удаляем ID пользователя из сессии
+    return redirect(url_for('login'))
 
 # Создание карточки
 @app.route('/cards', methods=['POST'])
 def create_card():
+    if 'user_id' not in session:
+        return jsonify({"error": "Необходимо войти в систему"}), 401
+
     data = request.json
-    user_id = data.get('user_id')
     full_name = data.get('full_name')
     birth_date = data.get('birth_date')
     interests = data.get('interests')
-
-    if not user_id:
-        return jsonify({"error": "Необходимо войти в систему"}), 401
 
     if birth_date and not is_valid_date(birth_date):
         return jsonify({"error": "Неверный формат даты. Используйте формат дд.мм.гггг."}), 400
@@ -104,7 +116,7 @@ def create_card():
     conn = sqlite3.connect(DATABASE)
     cursor = conn.cursor()
     cursor.execute('INSERT INTO cards (user_id, full_name, birth_date, interests) VALUES (?, ?, ?, ?)',
-                   (user_id, full_name, birth_date, interests))
+                   (session['user_id'], full_name, birth_date, interests))
     conn.commit()
     conn.close()
     return jsonify({"message": "Card created"}), 201
@@ -112,13 +124,12 @@ def create_card():
 # Получение карточек
 @app.route('/cards', methods=['GET'])
 def get_cards():
-    user_id = request.args.get('user_id')
-    if not user_id:
+    if 'user_id' not in session:
         return jsonify({"error": "Необходимо войти в систему"}), 401
 
     conn = sqlite3.connect(DATABASE)
     cursor = conn.cursor()
-    cursor.execute('SELECT * FROM cards WHERE user_id = ?', (user_id,))
+    cursor.execute('SELECT * FROM cards WHERE user_id = ?', (session['user_id'],))
     cards = cursor.fetchall()
     conn.close()
     return jsonify(cards)
@@ -126,14 +137,13 @@ def get_cards():
 # Редактирование карточки
 @app.route('/cards/<int:card_id>', methods=['PUT'])
 def update_card(card_id):
+    if 'user_id' not in session:
+        return jsonify({"error": "Необходимо войти в систему"}), 401
+
     data = request.json
-    user_id = data.get('user_id')
     full_name = data.get('full_name')
     birth_date = data.get('birth_date')
     interests = data.get('interests')
-
-    if not user_id:
-        return jsonify({"error": "Необходимо войти в систему"}), 401
 
     if birth_date and not is_valid_date(birth_date):
         return jsonify({"error": "Неверный формат даты. Используйте формат дд.мм.гггг."}), 400
@@ -144,7 +154,7 @@ def update_card(card_id):
         UPDATE cards
         SET full_name = ?, birth_date = ?, interests = ?
         WHERE id = ? AND user_id = ?
-    ''', (full_name, birth_date, interests, card_id, user_id))
+    ''', (full_name, birth_date, interests, card_id, session['user_id']))
     conn.commit()
     conn.close()
     return jsonify({"message": "Card updated"}), 200
@@ -152,13 +162,12 @@ def update_card(card_id):
 # Удаление карточки
 @app.route('/cards/<int:card_id>', methods=['DELETE'])
 def delete_card(card_id):
-    user_id = request.args.get('user_id')
-    if not user_id:
+    if 'user_id' not in session:
         return jsonify({"error": "Необходимо войти в систему"}), 401
 
     conn = sqlite3.connect(DATABASE)
     cursor = conn.cursor()
-    cursor.execute('DELETE FROM cards WHERE id = ? AND user_id = ?', (card_id, user_id))
+    cursor.execute('DELETE FROM cards WHERE id = ? AND user_id = ?', (card_id, session['user_id']))
     conn.commit()
     conn.close()
     return jsonify({"message": "Card deleted"}), 200
