@@ -79,12 +79,8 @@ def register():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        data = request.get_json()  # Получаем данные в формате JSON
-        if not data:
-            return jsonify({"error": "Логин и пароль обязательны"}), 400
-
-        username = data.get('username')
-        password = data.get('password')
+        username = request.form.get('username')
+        password = request.form.get('password')
 
         if not username or not password:
             return jsonify({"error": "Логин и пароль обязательны"}), 400
@@ -103,7 +99,7 @@ def login():
 
         # Сохраняем ID пользователя в сессии
         session['user_id'] = user[0]
-        return jsonify({"message": "Успешный вход"}), 200
+        return redirect(url_for('index'))  # Перенаправляем на главную страницу
     return render_template('login.html')
 
 # Выход
@@ -111,6 +107,13 @@ def login():
 def logout():
     session.pop('user_id', None)  # Удаляем ID пользователя из сессии
     return redirect(url_for('login'))
+
+# Проверка авторизации
+@app.route('/check_auth')
+def check_auth():
+    if 'user_id' not in session:
+        return jsonify({"error": "Не авторизован"}), 401
+    return jsonify({"message": "Авторизован"}), 200
 
 # Создание карточки
 @app.route('/cards', methods=['POST'])

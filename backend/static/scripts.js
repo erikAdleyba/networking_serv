@@ -84,3 +84,31 @@ document.getElementById('saveChangesBtn').addEventListener('click', async () => 
         bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
     }
 });
+
+document.getElementById('cardForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const fullName = document.getElementById('fullName').value;
+    const birthDate = document.getElementById('birthDate').value;
+    const interests = document.getElementById('interests').value;
+    const phone = document.getElementById('phone').value;
+    const contacts = document.getElementById('contacts').value;
+    const conversations = document.getElementById('conversations').value;
+
+    const response = await fetch('/cards', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            full_name: fullName,
+            birth_date: birthDate,
+            interests: interests,
+            phone: phone,
+            contacts: contacts,
+            conversations: conversations
+        })
+    });
+
+    if (response.ok) {
+        alert('Карточка создана!');
+        loadCards();
+    }
+});
