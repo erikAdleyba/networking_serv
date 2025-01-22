@@ -2,10 +2,14 @@ from flask import Flask, request, jsonify, render_template, redirect, url_for, s
 import sqlite3
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
+import logging
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here'  # Секретный ключ для подписи сессий
 DATABASE = 'cards.db'
+
+# Настройка логирования
+logging.basicConfig(level=logging.DEBUG)
 
 # Инициализация базы данных
 def init_db():
@@ -61,14 +65,17 @@ def register():
 
         password_hash = generate_password_hash(password)
 
-        conn = sqlite3.connect(DATABASE)
-        cursor = conn.cursor()
         try:
+            conn = sqlite3.connect(DATABASE)
+            cursor = conn.cursor()
             cursor.execute('INSERT INTO users (username, password_hash) VALUES (?, ?)',
                            (username, password_hash))
             conn.commit()
         except sqlite3.IntegrityError:
             return jsonify({"error": "Пользователь уже существует"}), 400
+        except sqlite3.Error as e:
+            logging.error(f"Ошибка базы данных: {e}")
+            return jsonify({"error": "Ошибка базы данных"}), 500
         finally:
             conn.close()
 
@@ -85,13 +92,18 @@ def login():
         if not username or not password:
             return jsonify({"error": "Логин и пароль обязательны"}), 400
 
-        conn = sqlite3.connect(DATABASE)
-        cursor = conn.cursor()
-        cursor.execute('SELECT id, password_hash FROM users WHERE username = ?', (username,))
-        user = cursor.fetchone()
-        conn.close()
+        try:
+            conn = sqlite3.connect(DATABASE)
+            cursor = conn.cursor()
+            cursor.execute('SELECT id, password_hash FROM users WHERE username = ?', (username,))
+            user = cursor.fetchone()
+        except sqlite3.Error as e:
+            logging.error(f"Ошибка базы данных: {e}")
+            return jsonify({"error": "Ошибка базы данных"}), 500
+        finally:
+            conn.close()
 
-        if not user:
+        if user is None:
             return jsonify({"error": "Пользователь не найден"}), 404
 
         if not check_password_hash(user[1], password):
@@ -99,7 +111,7 @@ def login():
 
         # Сохраняем ID пользователя в сессии
         session['user_id'] = user[0]
-        return redirect(url_for('index'))  # Перенаправляем на главную страницу
+        return jsonify({"message": "Успешный вход"}), 200
     return render_template('login.html')
 
 # Выход
@@ -132,14 +144,20 @@ def create_card():
     if birth_date and not is_valid_date(birth_date):
         return jsonify({"error": "Неверный формат даты. Используйте формат дд.мм.гггг."}), 400
 
-    conn = sqlite3.connect(DATABASE)
-    cursor = conn.cursor()
-    cursor.execute('''
-        INSERT INTO cards (user_id, full_name, birth_date, interests, phone, contacts, conversations)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-    ''', (session['user_id'], full_name, birth_date, interests, phone, contacts, conversations))
-    conn.commit()
-    conn.close()
+    try:
+        conn = sqlite3.connect(DATABASE)
+        cursor = conn.cursor()
+        cursor.execute('''
+            INSERT INTO cards (user_id, full_name, birth_date, interests, phone, contacts, conversations)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        ''', (session['user_id'], full_name, birth_date, interests, phone, contacts, conversations))
+        conn.commit()
+    except sqlite3.Error as e:
+        logging.error(f"Ошибка базы данных: {e}")
+        return jsonify({"error": "Ошибка базы данных"}), 500
+    finally:
+        conn.close()
+
     return jsonify({"message": "Card created"}), 201
 
 # Получение карточек
@@ -148,11 +166,17 @@ def get_cards():
     if 'user_id' not in session:
         return jsonify({"error": "Необходимо войти в систему"}), 401
 
-    conn = sqlite3.connect(DATABASE)
-    cursor = conn.cursor()
-    cursor.execute('SELECT * FROM cards WHERE user_id = ?', (session['user_id'],))
-    cards = cursor.fetchall()
-    conn.close()
+    try:
+        conn = sqlite3.connect(DATABASE)
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM cards WHERE user_id = ?', (session['user_id'],))
+        cards = cursor.fetchall()
+    except sqlite3.Error as e:
+        logging.error(f"Ошибка базы данных: {e}")
+        return jsonify({"error": "Ошибка базы данных"}), 500
+    finally:
+        conn.close()
+
     return jsonify(cards)
 
 # Редактирование карточки
@@ -172,15 +196,21 @@ def update_card(card_id):
     if birth_date and not is_valid_date(birth_date):
         return jsonify({"error": "Неверный формат даты. Используйте формат дд.мм.гггг."}), 400
 
-    conn = sqlite3.connect(DATABASE)
-    cursor = conn.cursor()
-    cursor.execute('''
-        UPDATE cards
-        SET full_name = ?, birth_date = ?, interests = ?, phone = ?, contacts = ?, conversations = ?
-        WHERE id = ? AND user_id = ?
-    ''', (full_name, birth_date, interests, phone, contacts, conversations, card_id, session['user_id']))
-    conn.commit()
-    conn.close()
+    try:
+        conn = sqlite3.connect(DATABASE)
+        cursor = conn.cursor()
+        cursor.execute('''
+            UPDATE cards
+            SET full_name = ?, birth_date = ?, interests = ?, phone = ?, contacts = ?, conversations = ?
+            WHERE id = ? AND user_id = ?
+        ''', (full_name, birth_date, interests, phone, contacts, conversations, card_id, session['user_id']))
+        conn.commit()
+    except sqlite3.Error as e:
+        logging.error(f"Ошибка базы данных: {e}")
+        return jsonify({"error": "Ошибка базы данных"}), 500
+    finally:
+        conn.close()
+
     return jsonify({"message": "Card updated"}), 200
 
 # Удаление карточки
@@ -189,11 +219,17 @@ def delete_card(card_id):
     if 'user_id' not in session:
         return jsonify({"error": "Необходимо войти в систему"}), 401
 
-    conn = sqlite3.connect(DATABASE)
-    cursor = conn.cursor()
-    cursor.execute('DELETE FROM cards WHERE id = ? AND user_id = ?', (card_id, session['user_id']))
-    conn.commit()
-    conn.close()
+    try:
+        conn = sqlite3.connect(DATABASE)
+        cursor = conn.cursor()
+        cursor.execute('DELETE FROM cards WHERE id = ? AND user_id = ?', (card_id, session['user_id']))
+        conn.commit()
+    except sqlite3.Error as e:
+        logging.error(f"Ошибка базы данных: {e}")
+        return jsonify({"error": "Ошибка базы данных"}), 500
+    finally:
+        conn.close()
+
     return jsonify({"message": "Card deleted"}), 200
 
 # Запуск сервера
