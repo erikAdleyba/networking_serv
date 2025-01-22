@@ -1,33 +1,12 @@
-// Проверка авторизации при загрузке страницы
-document.addEventListener('DOMContentLoaded', () => {
-    loadCards();
-});
-
-// Создание карточки
-document.getElementById('cardForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const fullName = document.getElementById('fullName').value;
-    const birthDate = document.getElementById('birthDate').value;
-    const interests = document.getElementById('interests').value;
-
-    if (birthDate && !isValidDate(birthDate)) {
-        alert('Неверный формат даты. Используйте формат дд.мм.гггг.');
-        return;
-    }
-
-    const response = await fetch('/cards', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ full_name: fullName, birth_date: birthDate, interests: interests })
-    });
-
-    if (response.ok) {
-        alert('Карточка создана!');
+document.addEventListener('DOMContentLoaded', async () => {
+    const response = await fetch('/check_auth');
+    if (!response.ok) {
+        window.location.href = '/login';  // Перенаправляем на страницу входа
+    } else {
         loadCards();
     }
 });
 
-// Загрузка карточек
 async function loadCards() {
     const response = await fetch('/cards');
     const cards = await response.json();
@@ -41,7 +20,6 @@ async function loadCards() {
     `).join('');
 }
 
-// Удаление карточки
 async function deleteCard(cardId) {
     const response = await fetch(`/cards/${cardId}`, { method: 'DELETE' });
     if (response.ok) {
@@ -50,7 +28,6 @@ async function deleteCard(cardId) {
     }
 }
 
-// Валидация даты
 function isValidDate(dateString) {
     const regex = /^\d{2}\.\d{2}\.\d{4}$/; // Формат дд.мм.гггг
     if (!regex.test(dateString)) return false;
@@ -60,7 +37,6 @@ function isValidDate(dateString) {
     return date && date.getMonth() + 1 === parseInt(month);
 }
 
-// Открытие модального окна для редактирования
 function openEditModal(cardId, fullName, birthDate, interests) {
     document.getElementById('editFullName').value = fullName;
     document.getElementById('editBirthDate').value = birthDate || '';
@@ -69,7 +45,6 @@ function openEditModal(cardId, fullName, birthDate, interests) {
     new bootstrap.Modal(document.getElementById('editModal')).show();
 }
 
-// Сохранение изменений
 document.getElementById('saveChangesBtn').addEventListener('click', async () => {
     const cardId = document.getElementById('editCardId').value;
     const fullName = document.getElementById('editFullName').value;

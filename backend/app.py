@@ -76,8 +76,12 @@ def register():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
+        data = request.json
+        username = data.get('username')
+        password = data.get('password')
+
+        if not username or not password:
+            return jsonify({"error": "Логин и пароль обязательны"}), 400
 
         conn = sqlite3.connect(DATABASE)
         cursor = conn.cursor()
@@ -85,13 +89,22 @@ def login():
         user = cursor.fetchone()
         conn.close()
 
-        if not user or not check_password_hash(user[1], password):
-            return jsonify({"error": "Неверный логин или пароль"}), 401
+        if not user:
+            return jsonify({"error": "Пользователь не найден"}), 404
+
+        if not check_password_hash(user[1], password):
+            return jsonify({"error": "Неверный пароль"}), 401
 
         # Сохраняем ID пользователя в сессии
         session['user_id'] = user[0]
-        return redirect(url_for('index'))
+        return jsonify({"message": "Успешный вход"}), 200
     return render_template('login.html')
+
+@app.route('/check_auth')
+def check_auth():
+    if 'user_id' not in session:
+        return jsonify({"error": "Необходимо войти в систему"}), 401
+    return jsonify({"message": "Пользователь авторизован"}), 200
 
 # Выход
 @app.route('/logout')
