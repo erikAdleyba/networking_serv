@@ -14,7 +14,10 @@ async function loadCards() {
     cardsList.innerHTML = cards.map(card => `
         <li class="list-group-item">
             <strong>${card[2]}</strong> (${card[3] || 'Не указана'}) - ${card[4] || 'Нет интересов'}
-            <button class="btn btn-sm btn-warning float-end" onclick="openEditModal(${card[0]}, '${card[2]}', '${card[3] || ''}', '${card[4] || ''}')">Редактировать</button>
+            <p>Телефон: ${card[5] || 'Не указан'}</p>
+            <p>Контакты: ${card[6] || 'Не указаны'}</p>
+            <p>Беседы: ${card[7] || 'Нет записей'}</p>
+            <button class="btn btn-sm btn-warning float-end" onclick="openEditModal(${card[0]}, '${card[2]}', '${card[3] || ''}', '${card[4] || ''}', '${card[5] || ''}', '${card[6] || ''}', '${card[7] || ''}')">Редактировать</button>
             <button class="btn btn-sm btn-danger float-end me-2" onclick="deleteCard(${card[0]})">Удалить</button>
         </li>
     `).join('');
@@ -37,10 +40,13 @@ function isValidDate(dateString) {
     return date && date.getMonth() + 1 === parseInt(month);
 }
 
-function openEditModal(cardId, fullName, birthDate, interests) {
+function openEditModal(cardId, fullName, birthDate, interests, phone, contacts, conversations) {
     document.getElementById('editFullName').value = fullName;
     document.getElementById('editBirthDate').value = birthDate || '';
     document.getElementById('editInterests').value = interests || '';
+    document.getElementById('editPhone').value = phone || '';
+    document.getElementById('editContacts').value = contacts || '';
+    document.getElementById('editConversations').value = conversations || '';
     document.getElementById('editCardId').value = cardId;
     new bootstrap.Modal(document.getElementById('editModal')).show();
 }
@@ -50,6 +56,9 @@ document.getElementById('saveChangesBtn').addEventListener('click', async () => 
     const fullName = document.getElementById('editFullName').value;
     const birthDate = document.getElementById('editBirthDate').value;
     const interests = document.getElementById('editInterests').value;
+    const phone = document.getElementById('editPhone').value;
+    const contacts = document.getElementById('editContacts').value;
+    const conversations = document.getElementById('editConversations').value;
 
     if (birthDate && !isValidDate(birthDate)) {
         alert('Неверный формат даты. Используйте формат дд.мм.гггг.');
@@ -59,7 +68,14 @@ document.getElementById('saveChangesBtn').addEventListener('click', async () => 
     const response = await fetch(`/cards/${cardId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ full_name: fullName, birth_date: birthDate, interests: interests })
+        body: JSON.stringify({
+            full_name: fullName,
+            birth_date: birthDate,
+            interests: interests,
+            phone: phone,
+            contacts: contacts,
+            conversations: conversations
+        })
     });
 
     if (response.ok) {

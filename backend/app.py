@@ -25,6 +25,9 @@ def init_db():
             full_name TEXT NOT NULL,
             birth_date TEXT,
             interests TEXT,
+            phone TEXT,
+            contacts TEXT,
+            conversations TEXT,
             FOREIGN KEY (user_id) REFERENCES users(id)
         )
     ''')
@@ -76,7 +79,10 @@ def register():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        data = request.json
+        data = request.get_json()  # Получаем данные в формате JSON
+        if not data:
+            return jsonify({"error": "Логин и пароль обязательны"}), 400
+
         username = data.get('username')
         password = data.get('password')
 
@@ -100,12 +106,6 @@ def login():
         return jsonify({"message": "Успешный вход"}), 200
     return render_template('login.html')
 
-@app.route('/check_auth')
-def check_auth():
-    if 'user_id' not in session:
-        return jsonify({"error": "Необходимо войти в систему"}), 401
-    return jsonify({"message": "Пользователь авторизован"}), 200
-
 # Выход
 @app.route('/logout')
 def logout():
@@ -122,14 +122,19 @@ def create_card():
     full_name = data.get('full_name')
     birth_date = data.get('birth_date')
     interests = data.get('interests')
+    phone = data.get('phone')
+    contacts = data.get('contacts')
+    conversations = data.get('conversations')
 
     if birth_date and not is_valid_date(birth_date):
         return jsonify({"error": "Неверный формат даты. Используйте формат дд.мм.гггг."}), 400
 
     conn = sqlite3.connect(DATABASE)
     cursor = conn.cursor()
-    cursor.execute('INSERT INTO cards (user_id, full_name, birth_date, interests) VALUES (?, ?, ?, ?)',
-                   (session['user_id'], full_name, birth_date, interests))
+    cursor.execute('''
+        INSERT INTO cards (user_id, full_name, birth_date, interests, phone, contacts, conversations)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    ''', (session['user_id'], full_name, birth_date, interests, phone, contacts, conversations))
     conn.commit()
     conn.close()
     return jsonify({"message": "Card created"}), 201
@@ -157,6 +162,9 @@ def update_card(card_id):
     full_name = data.get('full_name')
     birth_date = data.get('birth_date')
     interests = data.get('interests')
+    phone = data.get('phone')
+    contacts = data.get('contacts')
+    conversations = data.get('conversations')
 
     if birth_date and not is_valid_date(birth_date):
         return jsonify({"error": "Неверный формат даты. Используйте формат дд.мм.гггг."}), 400
@@ -165,9 +173,9 @@ def update_card(card_id):
     cursor = conn.cursor()
     cursor.execute('''
         UPDATE cards
-        SET full_name = ?, birth_date = ?, interests = ?
+        SET full_name = ?, birth_date = ?, interests = ?, phone = ?, contacts = ?, conversations = ?
         WHERE id = ? AND user_id = ?
-    ''', (full_name, birth_date, interests, card_id, session['user_id']))
+    ''', (full_name, birth_date, interests, phone, contacts, conversations, card_id, session['user_id']))
     conn.commit()
     conn.close()
     return jsonify({"message": "Card updated"}), 200
