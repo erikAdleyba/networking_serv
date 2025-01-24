@@ -92,14 +92,22 @@ function updateCardsList(cards) {
     const searchQuery = document.getElementById('searchInput').value.trim().toLowerCase();
     const cardsList = document.getElementById('cardsList');
     cardsList.innerHTML = cards.map(card => `
-        <li class="list-group-item">
-            <strong>${highlightText(card[2], searchQuery)}</strong> (${highlightText(card[3] || 'Не указана', searchQuery)}) - ${highlightText(card[4] || 'Нет интересов', searchQuery)}
-            <p>Телефон: ${highlightText(card[5] || 'Не указан', searchQuery)}</p>
-            <p>Контакты: ${highlightText(card[6] || 'Не указаны', searchQuery)}</p>
-            <p>Беседы: ${highlightText(card[7] || 'Нет записей', searchQuery)}</p>
-            <button class="btn btn-sm btn-warning float-end" onclick="openEditModal(${card[0]}, '${card[2]}', '${card[3] || ''}', '${card[4] || ''}', '${card[5] || ''}', '${card[6] || ''}', '${card[7] || ''}')">Редактировать</button>
-            <button class="btn btn-sm btn-danger float-end me-2" onclick="deleteCard(${card[0]})">Удалить</button>
-        </li>
+        <div class="col-md-6">
+            <div class="card-item">
+                <strong>${highlightText(card[2], searchQuery)}</strong> (${highlightText(card[3] || 'Не указана', searchQuery)}) - ${highlightText(card[4] || 'Нет интересов', searchQuery)}
+                <p>Телефон: ${highlightText(card[5] || 'Не указан', searchQuery)}</p>
+                <p>Контакты: ${highlightText(card[6] || 'Не указаны', searchQuery)}</p>
+                <p>Беседы: ${highlightText(card[7] || 'Нет записей', searchQuery)}</p>
+                <div class="text-end">
+                    <button class="btn btn-sm btn-warning" onclick="openEditModal(${card[0]}, '${card[2]}', '${card[3] || ''}', '${card[4] || ''}', '${card[5] || ''}', '${card[6] || ''}', '${card[7] || ''}')">
+                        <i class="fas fa-edit"></i> Редактировать
+                    </button>
+                    <button class="btn btn-sm btn-danger" onclick="deleteCard(${card[0]})">
+                        <i class="fas fa-trash"></i> Удалить
+                    </button>
+                </div>
+            </div>
+        </div>
     `).join('');
 }
 

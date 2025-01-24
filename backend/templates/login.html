@@ -6,34 +6,36 @@
     <title>Вход</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
-    <div class="container mt-5">
-        <h1 class="text-center">Вход</h1>
-
-        <!-- Форма входа -->
-        <form id="loginForm" method="POST" action="{{ url_for('login') }}">
-            <div class="mb-3">
-                <label for="username" class="form-label">Логин:</label>
-                <input type="text" id="username" name="username" class="form-control" required>
+    <div class="container d-flex justify-content-center align-items-center vh-100">
+        <div class="card auth-card">
+            <div class="card-body">
+                <h2 class="text-gradient text-center mb-4">Вход</h2>
+                <form id="loginForm" method="POST" action="{{ url_for('login') }}">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Логин:</label>
+                        <input type="text" id="username" name="username" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Пароль:</label>
+                        <input type="password" id="password" name="password" class="form-control" required>
+                    </div>
+                    <button type="submit" class="btn btn-gradient w-100">Войти</button>
+                </form>
+                <p class="text-center mt-3">
+                    Нет аккаунта? <a href="{{ url_for('register') }}" class="text-gradient">Зарегистрируйтесь</a>.
+                </p>
+                <div id="errorMessage" class="alert alert-danger mt-3" style="display: none;"></div>
             </div>
-            <div class="mb-3">
-                <label for="password" class="form-label">Пароль:</label>
-                <input type="password" id="password" name="password" class="form-control" required>
-            </div>
-            <button type="submit" class="btn btn-primary">Войти</button>
-        </form>
-
-        <p class="mt-3">Нет аккаунта? <a href="{{ url_for('register') }}">Зарегистрируйтесь</a>.</p>
-
-        <!-- Блок для отображения ошибок -->
-        <div id="errorMessage" class="alert alert-danger mt-3" style="display: none;"></div>
+        </div>
     </div>
 
     <script>
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const formData = new FormData(e.target);  // Используем FormData для отправки данных формы
+            const formData = new FormData(e.target);
 
             const response = await fetch('/login', {
                 method: 'POST',
@@ -45,8 +47,8 @@
             } else {
                 const error = await response.json();
                 const errorMessage = document.getElementById('errorMessage');
-                errorMessage.textContent = error.error;  // Показываем ошибку
-                errorMessage.style.display = 'block';    // Делаем блок видимым
+                errorMessage.textContent = error.error;
+                errorMessage.style.display = 'block';
             }
         });
     </script>

@@ -1,23 +1,161 @@
+/* Основные стили */
 body {
     background-color: #f8f9fa;
-    font-family: Arial, sans-serif;
+    font-family: 'Arial', sans-serif;
+    color: #333;
 }
 
 .container {
     max-width: 800px;
     margin: 0 auto;
+    padding: 20px;
 }
 
-h1 {
-    color: #333;
-}
-
-.list-group-item {
-    margin-bottom: 10px;
-    border-radius: 5px;
-}
-
-.highlight {
-    background-color: yellow;
+/* Градиентный текст */
+.text-gradient {
+    background: linear-gradient(90deg, #6a11cb, #2575fc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
     font-weight: bold;
+}
+
+/* Кнопка с градиентом */
+.btn-gradient {
+    background: linear-gradient(90deg, #6a11cb, #2575fc);
+    color: white;
+    border: none;
+    transition: transform 0.2s ease;
+}
+
+.btn-gradient:hover {
+    transform: scale(1.05);
+}
+
+/* Поле поиска */
+.search-input {
+    border-radius: 25px;
+    padding: 10px 20px;
+    border: 1px solid #ddd;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    transition: box-shadow 0.3s ease;
+}
+
+.search-input:focus {
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    border-color: #6a11cb;
+}
+
+/* Карточки */
+.card-item {
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 15px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.card-item strong {
+    color: #6a11cb;
+}
+
+.card-item p {
+    margin: 5px 0;
+    color: #555;
+}
+
+/* Кнопки редактирования и удаления */
+.btn-sm {
+    margin-left: 10px;
+}
+
+/* Подсветка найденного текста */
+.highlight {
+    background-color: #ffeb3b;
+    font-weight: bold;
+    padding: 2px 4px;
+    border-radius: 3px;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .container {
+        padding: 10px;
+    }
+
+    .card-item {
+        padding: 15px;
+    }
+}
+
+/* Стили для страниц регистрации и логина */
+.auth-card {
+    background: white;
+    border-radius: 15px;
+    padding: 30px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.auth-card h2 {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+.auth-card .form-control {
+    border-radius: 25px;
+    padding: 10px 20px;
+    border: 1px solid #ddd;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    transition: box-shadow 0.3s ease;
+}
+
+.auth-card .form-control:focus {
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    border-color: #6a11cb;
+}
+
+.auth-card .btn-gradient {
+    background: linear-gradient(90deg, #6a11cb, #2575fc);
+    color: white;
+    border: none;
+    border-radius: 25px;
+    padding: 10px 20px;
+    transition: transform 0.2s ease;
+}
+
+.auth-card .btn-gradient:hover {
+    transform: scale(1.05);
+}
+
+.auth-card .text-gradient {
+    background: linear-gradient(90deg, #6a11cb, #2575fc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: bold;
+}
+
+.auth-card .alert {
+    border-radius: 10px;
+    padding: 10px;
+    text-align: center;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .auth-card {
+        padding: 20px;
+    }
+
+    .auth-card h2 {
+        font-size: 20px;
+    }
 }
