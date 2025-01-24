@@ -134,12 +134,12 @@ def create_card():
         return jsonify({"error": "Необходимо войти в систему"}), 401
 
     data = request.json
-    full_name = data.get('full_name')
+    full_name = data.get('full_name').lower()  # Приводим к нижнему регистру
     birth_date = data.get('birth_date')
-    interests = data.get('interests')
+    interests = data.get('interests', '').lower()  # Приводим к нижнему регистру
     phone = data.get('phone')
-    contacts = data.get('contacts')
-    conversations = data.get('conversations')
+    contacts = data.get('contacts', '').lower()  # Приводим к нижнему регистру
+    conversations = data.get('conversations', '').lower()  # Приводим к нижнему регистру
 
     if birth_date and not is_valid_date(birth_date):
         return jsonify({"error": "Неверный формат даты. Используйте формат дд.мм.гггг."}), 400
@@ -188,15 +188,33 @@ def search_cards():
     search_query = request.args.get('query', '').strip().lower()  # Получаем поисковый запрос
     print("Поисковый запрос:", search_query)  # Отладочное сообщение
 
+    if not search_query:
+        return jsonify([])  # Если запрос пустой, возвращаем пустой список
+
+    # Разбиваем поисковый запрос на отдельные слова
+    search_words = search_query.split()
+
     try:
         conn = sqlite3.connect(DATABASE)
         cursor = conn.cursor()
-        # Ищем карточки, где ФИО, интересы или беседы содержат поисковый запрос (без учета регистра)
-        cursor.execute('''
+
+        # Создаем SQL-запрос для поиска по каждому слову
+        query = '''
             SELECT * FROM cards 
             WHERE user_id = ? 
-            AND (LOWER(full_name) LIKE ? OR LOWER(interests) LIKE ? OR LOWER(conversations) LIKE ?)
-        ''', (session['user_id'], f'%{search_query}%', f'%{search_query}%', f'%{search_query}%'))
+            AND (
+        '''
+        params = [session['user_id']]
+
+        for i, word in enumerate(search_words):
+            if i > 0:
+                query += ' OR '
+            query += '(LOWER(full_name) LIKE ? OR LOWER(interests) LIKE ? OR LOWER(conversations) LIKE ?)'
+            params.extend([f'%{word}%', f'%{word}%', f'%{word}%'])
+
+        query += ')'
+
+        cursor.execute(query, params)
         cards = cursor.fetchall()
         print("Найденные карточки:", cards)  # Отладочное сообщение
     except sqlite3.Error as e:
@@ -214,12 +232,12 @@ def update_card(card_id):
         return jsonify({"error": "Необходимо войти в систему"}), 401
 
     data = request.json
-    full_name = data.get('full_name')
+    full_name = data.get('full_name').lower()  # Приводим к нижнему регистру
     birth_date = data.get('birth_date')
-    interests = data.get('interests')
+    interests = data.get('interests', '').lower()  # Приводим к нижнему регистру
     phone = data.get('phone')
-    contacts = data.get('contacts')
-    conversations = data.get('conversations')
+    contacts = data.get('contacts', '').lower()  # Приводим к нижнему регистру
+    conversations = data.get('conversations', '').lower()  # Приводим к нижнему регистру
 
     if birth_date and not is_valid_date(birth_date):
         return jsonify({"error": "Неверный формат даты. Используйте формат дд.мм.гггг."}), 400
