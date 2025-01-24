@@ -16,38 +16,62 @@
             <a href="{{ url_for('logout') }}" class="btn btn-danger">Выйти</a>
         </div>
 
-        <!-- Форма для создания карточки -->
-        <form id="cardForm" class="mb-4">
-            <div class="mb-3">
-                <label for="fullName" class="form-label">ФИО:</label>
-                <input type="text" id="fullName" class="form-control" required>
-            </div>
-            <div class="mb-3">
-                <label for="birthDate" class="form-label">Дата рождения:</label>
-                <input type="text" id="birthDate" class="form-control" placeholder="дд.мм.гггг">
-            </div>
-            <div class="mb-3">
-                <label for="interests" class="form-label">Интересы:</label>
-                <input type="text" id="interests" class="form-control">
-            </div>
-            <div class="mb-3">
-                <label for="phone" class="form-label">Номер телефона:</label>
-                <input type="text" id="phone" class="form-control">
-            </div>
-            <div class="mb-3">
-                <label for="contacts" class="form-label">Контакты (Telegram, Instagram и т.д.):</label>
-                <input type="text" id="contacts" class="form-control">
-            </div>
-            <div class="mb-3">
-                <label for="conversations" class="form-label">Беседы (формат: дата - тема, через запятую):</label>
-                <textarea id="conversations" class="form-control" placeholder="Пример: 02.04.2000 - говорили о рыбах, 05.06.2001 - говорили о космосе"></textarea>
-            </div>
-            <button type="submit" class="btn btn-primary">Создать карточку</button>
-        </form>
+        <!-- Поиск карточек -->
+        <div class="mb-4">
+            <input type="text" id="searchInput" class="form-control" placeholder="Поиск по ФИО, интересам или беседам...">
+            <button id="searchButton" class="btn btn-primary mt-2">Найти</button>
+        </div>
+
+        <!-- Кнопка для добавления карточки -->
+        <button class="btn btn-success mb-4" data-bs-toggle="modal" data-bs-target="#addCardModal">Добавить карточку</button>
 
         <!-- Список карточек -->
         <h2>Список карточек</h2>
         <ul id="cardsList" class="list-group"></ul>
+    </div>
+
+    <!-- Модальное окно для добавления карточки -->
+    <div class="modal fade" id="addCardModal" tabindex="-1" aria-labelledby="addCardModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addCardModalLabel">Добавить карточку</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="cardForm">
+                        <div class="mb-3">
+                            <label for="fullName" class="form-label">ФИО:</label>
+                            <input type="text" id="fullName" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="birthDate" class="form-label">Дата рождения:</label>
+                            <input type="text" id="birthDate" class="form-control" placeholder="дд.мм.гггг">
+                        </div>
+                        <div class="mb-3">
+                            <label for="interests" class="form-label">Интересы:</label>
+                            <input type="text" id="interests" class="form-control">
+                        </div>
+                        <div class="mb-3">
+                            <label for="phone" class="form-label">Номер телефона:</label>
+                            <input type="text" id="phone" class="form-control">
+                        </div>
+                        <div class="mb-3">
+                            <label for="contacts" class="form-label">Контакты (Telegram, Instagram и т.д.):</label>
+                            <input type="text" id="contacts" class="form-control">
+                        </div>
+                        <div class="mb-3">
+                            <label for="conversations" class="form-label">Беседы (формат: дата - тема, через запятую):</label>
+                            <textarea id="conversations" class="form-control" placeholder="Пример: 02.04.2000 - говорили о рыбах, 05.06.2001 - говорили о космосе"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                    <button type="button" class="btn btn-primary" id="saveCardBtn">Сохранить</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Модальное окно для редактирования -->

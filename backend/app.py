@@ -179,6 +179,34 @@ def get_cards():
 
     return jsonify(cards)
 
+# Поиск карточек
+@app.route('/cards/search', methods=['GET'])
+def search_cards():
+    if 'user_id' not in session:
+        return jsonify({"error": "Необходимо войти в систему"}), 401
+
+    search_query = request.args.get('query', '').strip().lower()  # Получаем поисковый запрос
+    print("Поисковый запрос:", search_query)  # Отладочное сообщение
+
+    try:
+        conn = sqlite3.connect(DATABASE)
+        cursor = conn.cursor()
+        # Ищем карточки, где ФИО, интересы или беседы содержат поисковый запрос (без учета регистра)
+        cursor.execute('''
+            SELECT * FROM cards 
+            WHERE user_id = ? 
+            AND (LOWER(full_name) LIKE ? OR LOWER(interests) LIKE ? OR LOWER(conversations) LIKE ?)
+        ''', (session['user_id'], f'%{search_query}%', f'%{search_query}%', f'%{search_query}%'))
+        cards = cursor.fetchall()
+        print("Найденные карточки:", cards)  # Отладочное сообщение
+    except sqlite3.Error as e:
+        logging.error(f"Ошибка базы данных: {e}")
+        return jsonify({"error": "Ошибка базы данных"}), 500
+    finally:
+        conn.close()
+
+    return jsonify(cards)
+
 # Редактирование карточки
 @app.route('/cards/<int:card_id>', methods=['PUT'])
 def update_card(card_id):

@@ -16,3 +16,8 @@ h1 {
     margin-bottom: 10px;
     border-radius: 5px;
 }
+
+.highlight {
+    background-color: yellow;
+    font-weight: bold;
+}
