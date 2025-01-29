@@ -1,0 +1,29 @@
+services:
+  api_gateway:
+    build: ./api_gateway
+    ports:
+      - "5000:5000"
+    depends_on:
+      - auth_service
+      - card_service
+
+  auth_service:
+    build: ./auth_service
+    ports:
+      - "5001:5001"
+    volumes:
+      - ./auth_service/auth.db:/app/auth.db
+
+  card_service:
+    build: ./card_service
+    ports:
+      - "5002:5002"
+    volumes:
+      - ./card_service/cards.db:/app/cards.db
+
+  database_service:
+    build: ./database_service
+    ports:
+      - "5003:5003"
+    volumes:
+      - ./database_service/database.db:/app/database.db
