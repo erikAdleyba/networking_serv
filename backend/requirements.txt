@@ -1,0 +1,6 @@
+Flask==2.0.3
+psycopg2-binary==2.9.3
+python-dotenv==0.19.2
+flask-talisman==1.0.0
+flask-limiter==2.4.0
+pgcrypto==1.3
